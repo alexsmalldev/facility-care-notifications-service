@@ -13,6 +13,7 @@ Globals:
     Environment:
       Variables:
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1'
+        NODE_EXTRA_CA_CERTS: /etc/pki/tls/certs/ca-bundle.crt
 
 Resources:
   NotificationHandlerFunction:
@@ -20,7 +21,7 @@ Resources:
     Properties:
       CodeUri: notification-handler/
       Handler: src/handlers/notificationHandler.lambdaHandler
-      Runtime: nodejs22.x
+      Runtime: nodejs20.x
       Architectures:
         - x86_64
       Environment:
