@@ -1,0 +1,19 @@
+{
+  "Records": [
+    {
+      "messageId": "test-message-1",
+      "body": "{\"requestId\": 2, \"type\": \"STATUS_CHANGED\", \"recipientEmail\": \"YOUR_REAL_EMAIL\", \"recipientName\": \"Demo Customer\", \"recipientRole\": \"customer\", \"service\": \"Air Conditioning\", \"building\": \"Headquarters\", \"priority\": \"high\", \"slaDate\": \"2026-05-12T15:59:00Z\", \"timestamp\": \"2026-05-11T15:59:00Z\", \"previousStatus\": \"open\", \"newStatus\": \"in_progress\"}",
+      "attributes": {
+        "ApproximateReceiveCount": "1",
+        "SentTimestamp": "1715000000000",
+        "SenderId": "test",
+        "ApproximateFirstReceiveTimestamp": "1715000000000"
+      },
+      "messageAttributes": {},
+      "md5OfBody": "",
+      "eventSource": "aws:sqs",
+      "eventSourceARN": "arn:aws:sqs:eu-west-1:123456789:facility-care-notification-queue",
+      "awsRegion": "eu-west-1"
+    }
+  ]
+}

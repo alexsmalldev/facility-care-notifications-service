@@ -2,26 +2,31 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
   facility-care-notification-service
-
   Serverless notification service for Facility Care platform
 
-# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
-    Timeout: 3
-
-    # You can add LoggingConfig parameters such as the Logformat, Log Group, and SystemLogLevel or ApplicationLogLevel. Learn more here https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html#sam-function-loggingconfig.
+    Timeout: 10
+    MemorySize: 256
     LoggingConfig:
       LogFormat: JSON
+    Environment:
+      Variables:
+        AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1'
+
 Resources:
-  HelloWorldFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+  NotificationHandlerFunction:
+    Type: AWS::Serverless::Function
     Properties:
       CodeUri: notification-handler/
       Handler: src/handlers/notificationHandler.lambdaHandler
-      Runtime: nodejs24.x
+      Runtime: nodejs22.x
       Architectures:
-      - x86_64
+        - x86_64
+      Environment:
+        Variables:
+          MONGODB_URI: !Sub '{{resolve:ssm:/facility-care/mongodb-uri}}'
+          FROM_EMAIL: !Sub '{{resolve:ssm:/facility-care/from-email}}'
       Events:
         NotificationQueue:
           Type: SQS
@@ -31,19 +36,41 @@ Resources:
       Policies:
         - SQSPollerPolicy:
             QueueName: !GetAtt NotificationQueue.QueueName
-    Metadata: # Manage esbuild properties
+        - Statement:
+            - Effect: Allow
+              Action:
+                - ses:SendEmail
+                - ses:SendRawEmail
+              Resource: '*'
+        - Statement:
+            - Effect: Allow
+              Action:
+                - ssm:GetParameter
+              Resource:
+                - !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/facility-care/*'
+    Metadata:
       BuildMethod: esbuild
       BuildProperties:
         Minify: true
         Target: es2020
         Sourcemap: true
         EntryPoints:
-        - src/handlers/notificationHandler.ts
+          - src/handlers/notificationHandler.ts
 
   NotificationQueue:
     Type: AWS::SQS::Queue
     Properties:
       QueueName: facility-care-notification-queue
+      VisibilityTimeout: 60
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt NotificationDLQ.Arn
+        maxReceiveCount: 3
+
+  NotificationDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: facility-care-notification-dlq
+      MessageRetentionPeriod: 1209600
 
   ApplicationResourceGroup:
     Type: AWS::ResourceGroups::Group
@@ -52,16 +79,21 @@ Resources:
         Fn::Sub: ApplicationInsights-SAM-${AWS::StackName}
       ResourceQuery:
         Type: CLOUDFORMATION_STACK_1_0
+
   ApplicationInsightsMonitoring:
     Type: AWS::ApplicationInsights::Application
     Properties:
       ResourceGroupName:
         Ref: ApplicationResourceGroup
       AutoConfigurationEnabled: 'true'
+
 Outputs:
   NotificationQueueUrl:
     Description: SQS Queue URL for Facility Care notifications
     Value: !Ref NotificationQueue
+  NotificationDLQUrl:
+    Description: Dead Letter Queue URL
+    Value: !Ref NotificationDLQ
   NotificationHandlerFunction:
     Description: Notification Handler Lambda Function ARN
     Value: !GetAtt NotificationHandlerFunction.Arn
