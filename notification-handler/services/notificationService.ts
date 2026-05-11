@@ -1,4 +1,6 @@
-import { NotificationPayload, RequestStatus } from '../types/notification';
+import { NotificationPayload, NotificationLog, RequestStatus } from '../types/notification';
+import { sendEmail } from './emailService';
+import { logNotification } from '../repository/notificationRepository';
 import { logger } from '../utils/logger';
 
 const STATUS_LABELS: Record<RequestStatus, string> = {
@@ -18,6 +20,23 @@ export const buildCommentAddedMessage = (payload: NotificationPayload): string =
   return `${payload.commentAuthor} has left a comment on your ${payload.service} request at ${payload.building}: "${payload.commentContent}"`;
 };
 
+const buildNotificationLog = (
+  payload: NotificationPayload,
+  success: boolean,
+  errorMessage?: string
+): NotificationLog => ({
+  requestId: payload.requestId,
+  type: payload.type,
+  recipientEmail: payload.recipientEmail,
+  recipientRole: payload.recipientRole,
+  service: payload.service,
+  building: payload.building,
+  priority: payload.priority,
+  sentAt: new Date().toISOString(),
+  success,
+  errorMessage,
+});
+
 export const processNotification = async (
   payload: NotificationPayload
 ): Promise<void> => {
@@ -35,14 +54,6 @@ export const processNotification = async (
       });
       return;
     }
-    const message = buildStatusChangedMessage(payload);
-    logger.info('Status change message built', {
-      requestId: payload.requestId,
-      message,
-    });
-    // email service comming
-    // mongodb log coming
-
   } else if (payload.type === 'COMMENT_ADDED') {
     if (!payload.commentAuthor || !payload.commentContent) {
       logger.error('Missing comment fields for COMMENT_ADDED notification', {
@@ -50,18 +61,25 @@ export const processNotification = async (
       });
       return;
     }
-    const message = buildCommentAddedMessage(payload);
-    logger.info('Comment added message built', {
-      requestId: payload.requestId,
-      message,
-    });
-    // email service comming
-    // mongodb log coming
-
   } else {
     logger.warn('Unknown notification type received', {
       requestId: payload.requestId,
       type: payload.type,
     });
+    return;
+  }
+
+  try {
+    await sendEmail(payload);
+    await logNotification(buildNotificationLog(payload, true));
+  } catch (error) {
+    logger.error('Failed to process notification', {
+      requestId: payload.requestId,
+      error: (error as Error).message,
+    });
+    await logNotification(
+      buildNotificationLog(payload, false, (error as Error).message)
+    );
+    throw error;
   }
 };
