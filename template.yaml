@@ -25,8 +25,8 @@ Resources:
         - x86_64
       Environment:
         Variables:
-          MONGODB_URI: !Sub '{{resolve:ssm:/facility-care/mongodb-uri}}'
-          FROM_EMAIL: !Sub '{{resolve:ssm:/facility-care/from-email}}'
+          MONGODB_URI: '{{resolve:ssm:/facility-care/mongodb-uri}}'
+          FROM_EMAIL: '{{resolve:ssm:/facility-care/from-email}}'
       Events:
         NotificationQueue:
           Type: SQS
@@ -71,21 +71,6 @@ Resources:
     Properties:
       QueueName: facility-care-notification-dlq
       MessageRetentionPeriod: 1209600
-
-  ApplicationResourceGroup:
-    Type: AWS::ResourceGroups::Group
-    Properties:
-      Name:
-        Fn::Sub: ApplicationInsights-SAM-${AWS::StackName}
-      ResourceQuery:
-        Type: CLOUDFORMATION_STACK_1_0
-
-  ApplicationInsightsMonitoring:
-    Type: AWS::ApplicationInsights::Application
-    Properties:
-      ResourceGroupName:
-        Ref: ApplicationResourceGroup
-      AutoConfigurationEnabled: 'true'
 
 Outputs:
   NotificationQueueUrl:
