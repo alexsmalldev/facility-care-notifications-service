@@ -7,7 +7,7 @@
       "sourceMap": false,
       "module":"es2015",
       "moduleResolution":"node",
-      "types": ["node"],
+      "types": ["node", "jest"],
       "esModuleInterop": true, 
       "skipLibCheck": true,
       "forceConsistentCasingInFileNames": true,  
