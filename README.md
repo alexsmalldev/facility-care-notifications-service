@@ -42,18 +42,6 @@ If processing fails, SQS retries the message up to 3 times before moving it to a
 | `STATUS_CHANGED` | Admin updates request status | Customer |
 | `COMMENT_ADDED` | Admin or customer adds a timeline comment | Customer or Admin |
 
-## Project Structure
-facility-care-notification-service/
-├── notification-handler/
-│   └── src/
-│       ├── handlers/         # Lambda entry point
-│       ├── services/         # Email and notification logic
-│       ├── repository/       # MongoDB operations
-│       ├── types/            # TypeScript interfaces
-│       └── utils/            # Logger
-├── events/                   # Local test payloads
-└── template.yaml             # SAM infrastructure definition
-
 ## Environment Variables
 
 | Variable | Description |
