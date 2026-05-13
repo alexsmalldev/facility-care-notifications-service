@@ -33,7 +33,7 @@ A serverless notification microservice extending the [Facility Care](https://git
 4. Lambda sends a transactional email via AWS SES
 5. The notification is logged to MongoDB Atlas
 
-If processing fails, SQS retries the message up to 3 times before moving it to a Dead Letter Queue for investigation.
+If processing fails, SQS retries the message up to 3 times before moving it to a Dead Letter Queue for investigation. 
 
 ## Notification Types
 
